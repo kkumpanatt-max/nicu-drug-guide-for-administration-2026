@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <!-- iOS App Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="NICU Med">
+    
+    <title>NICU Drug Guide</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Sarabun', sans-serif; 
+            background-color: #f1f5f9; 
+            -webkit-font-smoothing: antialiased; 
+            padding-top: env(safe-area-inset-top);
+            user-select: none;
+        }
+        .teal-bg { background-color: #00b5ad; }
+        .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
+        .card-active { border-color: #00b5ad; box-shadow: 0 4px 15px rgba(0, 181, 173, 0.2); }
+        input { font-size: 16px !important; }
+        .help-modal { animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .tap-target:active { opacity: 0.7; transform: scale(0.98); }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useMemo } = React;
+
+        const drugData = [
+            { name: "Acyclovir", strength: "250 mg/vial", amountUsed: "250 mg", diluent: "SW 10 ml", concPostRecon: "25 mg", recConc: "≤ 7 mg", fluids: "NSS, D5W", administration: "IV >60 min", stability25: "24 hr (R)", stability2_8: "ห้ามแช่เย็น", note: "" },
+            { name: "Albumin 20%", strength: "10 g/50 ml", amountUsed: "-", diluent: "-", concPostRecon: "0.2 g", recConc: "undiluted", fluids: "NSS, D5W", administration: "IV >30 min (max 1 ml/min)", stability25: "4 hr", stability2_8: "NA", note: "" },
+            { name: "Amikacin", strength: "500 mg/2 ml", amountUsed: "0.4 ml", diluent: "NSS 9.6 ml", concPostRecon: "10 mg", recConc: "2.5-10 mg", fluids: "NSS, D5W, D10W", administration: "IV >1-2 hr", stability25: "24 hr (D)", stability2_8: "NA", note: "" },
+            { name: "Aminophylline (HAD)", strength: "250 mg/10 ml", amountUsed: "0.8 ml", diluent: "NSS 9.2 ml", concPostRecon: "2 mg", recConc: "1-25 mg", fluids: "NSS, D5W, D10W", administration: "IV >30-60 min", stability25: "24 hr (D)", stability2_8: "NA", note: "" },
+            { name: "Amphotericin B", strength: "50 mg/vial", amountUsed: "50 mg", diluent: "SW 10 ml", concPostRecon: "5 mg", recConc: "≤ 0.1 mg", fluids: "D5W, D10W *ห้ามใช้ NSS", administration: "IV drip >2-6 hr", stability25: "24 hr (R)", stability2_8: "7 วัน (R)", note: "" },
+            { name: "Ampicillin", strength: "1 g/vial", amountUsed: "1 g", diluent: "SW 10 ml", concPostRecon: "100 mg", recConc: "30-100 mg", fluids: "NSS, D5W, D10W", administration: "IV >15 min", stability25: "1 hr (R)", stability2_8: "4 hr (R)", note: "" },
+            { name: "Bactrim (SMX/TMP)", strength: "400/80 mg/5 ml", amountUsed: "1 ml", diluent: "D5W 7 ml", concPostRecon: "2 mg (of TMP)", recConc: "0.6-1 mg", fluids: "D5W เท่านั้น", administration: "IV >60-90 min", stability25: "6 hr (R)", stability2_8: "ห้ามแช่เย็น", note: "" },
+            { name: "Caffeine citrate", strength: "20 mg/1 ml", amountUsed: "0.5 ml", diluent: "D5W 4.5 ml", concPostRecon: "2 mg", recConc: "≤ 10 mg", fluids: "D5W", administration: "IV Load >30 min, IV MD >10 min", stability25: "24 hr (D)", stability2_8: "NA", note: "" },
+            { name: "Ca gluconate 10% (HAD)", strength: "1 g/10 ml", amountUsed: "1 ml", diluent: "SW 9 ml", concPostRecon: "10 mg", recConc: "10-50 mg", fluids: "NSS, D5W, D10W", administration: "IV >10-30 min (max 100 mg/min)", stability25: "24 hr (D)", stability2_8: "NA", note: "" },
+            { name: "Cefepime", strength: "1 g/vial", amountUsed: "1 g", diluent: "SW 10 ml", concPostRecon: "100 mg", recConc: "1-100 mg", fluids: "NSS, D5W, D10W", administration: "IV >30 min", stability25: "24 hr (R)", stability2_8: "7 วัน (R)", note: "" },
+            { name: "Cefotaxime", strength: "1 g/vial", amountUsed: "1 g", diluent: "SW 10 ml", concPostRecon: "100 mg", recConc: "Bolus 50-100, Drip 10-40 mg", fluids: "NSS, D5W, D10W", administration: "IV bolus 3-5 min, IV drip >10-30 min", stability25: "24 hr (R)", stability2_8: "7 วัน (R)", note: "" },
+            { name: "Ceftazidime", strength: "1 g/vial", amountUsed: "1 g", diluent: "SW 10 ml", concPostRecon: "100 mg", recConc: "Bolus 100-200, Drip 1-50 mg", fluids: "NSS, D5W, D10W", administration: "IV bolus 3-5 min, IV drip >30 min", stability25: "24 hr (R)", stability2_8: "3 วัน (R)", note: "" },
+            { name: "Ciprofloxacin", strength: "400 mg/200 ml", amountUsed: "-", diluent: "-", concPostRecon: "2 mg", recConc: "0.5-2 mg", fluids: "NSS, D5W, D10W, D5N/2, D5N/4, LRS", administration: "IV >60 min **ป้องกันแสง", stability25: "ทิ้งยาหลังเปิดใช้", stability2_8: "หากยังไม่ใช้-เก็บยาไว้ในกล่อง", note: "" },
+            { name: "Colistin", strength: "150 mg/vial", amountUsed: "150 mg", diluent: "SW 2 ml", concPostRecon: "75 mg", recConc: "Bolus 75 mg, Drip 2-4 mg", fluids: "NSS, D5W, D10W", administration: "IV bolus 3-5 min, IV drip >30 min", stability25: "24 hr (R)", stability2_8: "24 hr (R)", note: "" },
+            { name: "Dexamethasone", strength: "4 mg/1 ml", amountUsed: "1 ml", diluent: "NSS 7 ml", concPostRecon: "0.5 mg", recConc: "0.1-1 mg", fluids: "NSS, D5W, D10W", administration: "IV slow push", stability25: "24 hr (D)", stability2_8: "NA", note: "" },
+            { name: "Fluconazole", strength: "100 mg/50 ml", amountUsed: "-", diluent: "-", concPostRecon: "2 mg", recConc: "undiluted", fluids: "D5W, D10W", administration: "IV 1-2 hr", stability25: "NA", stability2_8: "7 วัน", note: "" },
+            { name: "Ganciclovir", strength: "500 mg/vial", amountUsed: "500 mg", diluent: "SW 10 ml", concPostRecon: "50 mg", recConc: "10 mg", fluids: "NSS, D5W, D10W", administration: "IV >60 min", stability25: "12 hr (R)", stability2_8: "24 hr (D)", note: "" },
+            { name: "Gentamicin", strength: "80 mg/2 ml", amountUsed: "1 ml", diluent: "9 ml", concPostRecon: "4 mg", recConc: "2-10 mg", fluids: "NSS, D5W, D10W", administration: "IV >30-120 min", stability25: "24 hr (D)", stability2_8: "ห้ามแช่เย็น", note: "" },
+            { name: "Hydrocortisone", strength: "100 mg/vial", amountUsed: "100 mg", diluent: "SW 2 ml", concPostRecon: "50 mg", recConc: "≤ 50 mg", fluids: "NSS, D5S, D5W", administration: "IV 0.5-10 min", stability25: "72 hr (R)", stability2_8: "NA", note: "" },
+            { name: "Indomethacin", strength: "1 mg/vial", amountUsed: "1 mg", diluent: "SW 2 ml", concPostRecon: "0.5 mg", recConc: "0.5-1 mg", fluids: "NSS, D5W", administration: "IV >30 min", stability25: "NA", stability2_8: "24 hr", note: "ห้ามให้ทาง UVC" },
+            { name: "Levetiracetam", strength: "500 mg/5 ml", amountUsed: "1 ml", diluent: "NSS 9 ml", concPostRecon: "10 mg", recConc: "≤15 mg", fluids: "NSS, D5W, LRS", administration: "IV >15 min", stability25: "24 hr", stability2_8: "NA", note: "" },
+            { name: "Levofloxacin", strength: "750 mg/150 ml", amountUsed: "-", diluent: "-", concPostRecon: "5 mg", recConc: "≤ 5 mg", fluids: "NSS, D5W, D5NS", administration: "IV >60 min", stability25: "3 hr", stability2_8: "หากยังไม่ใช้- เก็บยาไว้ในกล่อง", note: "" },
+            { name: "Meropenem", strength: "1 g/vial", amountUsed: "1 g", diluent: "SW 20 ml", concPostRecon: "50 mg", recConc: "1-20 หรือ 50 mg", fluids: "NSS, D5W, D10W", administration: "IV >30 min, Extended inf. >3 hr", stability25: "8 hr (R)", stability2_8: "48 hr (R)", note: "" },
+            { name: "Metronidazole", strength: "500 mg/100 ml", amountUsed: "-", diluent: "-", concPostRecon: "5 mg", recConc: "≤ 8 mg", fluids: "NSS, D5W", administration: "IV >30-60 min", stability25: "24 hr", stability2_8: "NA", note: "" },
+            { name: "Omeprazole", strength: "40 mg/vial", amountUsed: "40 mg", diluent: "SW 10 ml", concPostRecon: "4 mg", recConc: "undiluted", fluids: "NSS, D5W", administration: "IV push", stability25: "6 hr (R)", stability2_8: "12 hr (R)", note: "" },
+            { name: "Paracetamol", strength: "1 g/100 ml", amountUsed: "-", diluent: "-", concPostRecon: "10 mg", recConc: "undiluted", fluids: "NSS, D5W", administration: "IV >15-30 min", stability25: "84 hr", stability2_8: "ไม่ต้องแช่เย็น", note: "" },
+            { name: "Penicillin G sodium", strength: "5 MU/vial", amountUsed: "5 MU", diluent: "SW 23 ml", concPostRecon: "200K unit", recConc: "100-500K unit", fluids: "NSS, D5W, D10W", administration: "IV >15-60 min", stability25: "24 hr (R)", stability2_8: "7 วัน (R)", note: "" },
+            { name: "Phenobarbital", strength: "200 mg/1 ml", amountUsed: "0.5 ml", diluent: "NSS 9.5 ml", concPostRecon: "10 mg", recConc: "10 หรือ 65 mg", fluids: "NSS, NSS/2, D5W, D10W", administration: "IV >15-30 min", stability25: "NA", stability2_8: "NA", note: "หลังเปิดใช้แล้วทิ้งเลย" },
+            { name: "Phenytoin", strength: "250 mg/5 ml", amountUsed: "1 ml", diluent: "NSS 9 ml", concPostRecon: "5 mg", recConc: "≤ 5 mg", fluids: "NSS เท่านั้น", administration: "IV >1-4 hr *Flush NSS ก่อน+หลังให้ยา", stability25: "1 hr", stability2_8: "ไม่ต้องแช่เย็น", note: "" },
+            { name: "Piperacillin/tazobactam", strength: "4+0.5 g/vial", amountUsed: "4.5 g", diluent: "SW 20 ml", concPostRecon: "200 mg (of Pip)", recConc: "80-200 mg (of Pip)", fluids: "NSS, D5W", administration: "IV >30 min", stability25: "12 hr (R)", stability2_8: "48 hr (D)", note: "" },
+            { name: "Sodium bicarbonate 7.5%", strength: "44.6 mEq/50 ml", amountUsed: "1 ml", diluent: "SW 1 ml", concPostRecon: "0.45 mEq", recConc: "< 0.5 mEq", fluids: "NSS, D5W, D10W", administration: "Slowly IV push (max 10 mEq/min)", stability25: "24 hr (D)", stability2_8: "NA", note: "หลังเปิดใช้แล้วทิ้งเลย" },
+            { name: "Tigecycline", strength: "50 mg/vial", amountUsed: "50 mg", diluent: "5.3 ml", concPostRecon: "10 mg", recConc: "1 mg", fluids: "NSS, D5W, LRS", administration: "IV >30-60 min", stability25: "6 hr (R)", stability2_8: "48 hr (R)", note: "" },
+            { name: "Vancomycin", strength: "500 mg/vial", amountUsed: "500 mg", diluent: "SW 10 ml", concPostRecon: "50 mg", recConc: "5-10 mg", fluids: "NSS, D5W, D10W", administration: "IV drip >1-2 hr (max 10 mg/min)", stability25: "24 hr (R)", stability2_8: "14 วัน (D)", note: "" },
+            { name: "Vitamin K1", strength: "1 mg/0.5 ml หรือ 10 mg/ml", amountUsed: "0.5 หรือ 1 ml", diluent: "NSS 0.5 ml หรือ 9 ml", concPostRecon: "1 mg", recConc: "1, 2 หรือ 10 mg", fluids: "NSS, D5W, D10W", administration: "IV >10-30 min (max 1 mg/min) **ป้องกันแสง", stability25: "NA", stability2_8: "NA", note: "หลังเปิดใช้แล้วทิ้งเลย" }
+        ];
+
+        const App = () => {
+            const [search, setSearch] = useState('');
+            const [active, setActive] = useState(null);
+            const [showHelp, setShowHelp] = useState(false);
+
+            const filtered = useMemo(() => {
+                return drugData.filter(d => d.name.toLowerCase().includes(search.toLowerCase()));
+            }, [search]);
+
+            return (
+                <div className="flex flex-col min-h-screen">
+                    <header className="teal-bg p-6 pt-12 text-white sticky top-0 z-20 shadow-md">
+                        <div className="flex justify-between items-start mb-2">
+                            <h1 className="text-xl font-black tracking-tight">NICU PHRACHOMKLAO</h1>
+                            <button onClick={() => setShowHelp(true)} className="bg-white/20 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border border-white/30 tap-target">Share/Help</button>
+                        </div>
+                        <p className="text-[10px] opacity-80 uppercase tracking-tighter mb-4">Injectable Medication Guide 2026</p>
+                        <div className="relative">
+                            <input 
+                                type="text" 
+                                placeholder="🔍 ค้นหายา..." 
+                                className="w-full p-4 rounded-2xl bg-white/20 text-white placeholder-white/60 outline-none border border-white/30 focus:bg-white focus:text-slate-800 transition-all shadow-inner font-medium"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                            />
+                        </div>
+                    </header>
+
+                    <main className="p-4 space-y-3 flex-1 overflow-y-auto">
+                        {filtered.length > 0 ? filtered.map((d, idx) => (
+                            <div key={idx} 
+                                 className={`bg-white rounded-[2rem] border-2 transition-all tap-target ${active === idx ? 'card-active ring-4 ring-teal-500/10' : 'border-slate-100'}`} 
+                                 onClick={() => setActive(active === idx ? null : idx)}>
+                                <div className="p-5 flex justify-between items-center">
+                                    <div className="flex items-center gap-4">
+                                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-lg shadow-sm ${active === idx ? 'teal-bg text-white' : 'bg-teal-50 text-teal-600'}`}>
+                                            {d.name.charAt(0)}
+                                        </div>
+                                        <div>
+                                            <div className="font-extrabold text-slate-800 text-base">{d.name}</div>
+                                            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">{d.strength}</div>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Conc.</div>
+                                        <div className="text-teal-600 font-black text-sm">{d.recConc}</div>
+                                    </div>
+                                </div>
+                                {active === idx && (
+                                    <div className="px-5 pb-6 space-y-4 animate-in slide-in-from-top-2">
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="bg-slate-50 p-4 rounded-3xl border border-slate-100">
+                                                <div className="text-teal-600 font-bold mb-2 uppercase text-[10px] tracking-widest">การเตรียม</div>
+                                                <div className="text-xs space-y-1">
+                                                    <div className="flex justify-between text-slate-500">ใช้: <span className="font-bold text-slate-800">{d.amountUsed}</span></div>
+                                                    <div className="flex justify-between text-slate-500">ละลาย: <span className="font-bold text-slate-800">{d.diluent}</span></div>
+                                                    <div className="mt-2 pt-2 border-t border-slate-200 text-teal-600 font-bold flex justify-between">Conc: <span>{d.concPostRecon}/ml</span></div>
+                                                </div>
+                                            </div>
+                                            <div className="bg-slate-50 p-4 rounded-3xl border border-slate-100">
+                                                <div className="text-teal-600 font-bold mb-2 uppercase text-[10px] tracking-widest">ความคงตัว</div>
+                                                <div className="text-xs space-y-1">
+                                                    <div className="flex justify-between text-slate-500">25°C: <span className="font-bold text-slate-800">{d.stability25}</span></div>
+                                                    <div className="flex justify-between text-slate-500">2-8°C: <span className="font-bold text-slate-800">{d.stability2_8}</span></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="bg-slate-50 p-4 rounded-3xl border border-slate-100 text-xs leading-relaxed">
+                                            <div className="text-teal-600 font-bold mb-1 uppercase text-[10px] tracking-widest">การบริหารยา</div>
+                                            <div className="font-bold text-slate-700">{d.administration}</div>
+                                            <div className="text-[10px] text-slate-500 mt-1">สารน้ำ: {d.fluids}</div>
+                                        </div>
+                                        {d.note && <div className="bg-amber-50 p-4 rounded-3xl border border-amber-100 text-xs font-bold text-amber-800 leading-relaxed shadow-sm">⚠️ {d.note}</div>}
+                                    </div>
+                                )}
+                            </div>
+                        )) : (
+                            <div className="text-center py-20 text-slate-300 font-bold italic">ไม่พบข้อมูลยา...</div>
+                        )}
+                    </main>
+
+                    {showHelp && (
+                        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowHelp(false)}>
+                            <div className="bg-white w-full max-w-md rounded-[3rem] p-8 pb-12 help-modal relative shadow-2xl overflow-y-auto max-h-[90vh]" onClick={e => e.stopPropagation()}>
+                                <div className="w-16 h-1.5 bg-slate-200 rounded-full mx-auto mb-8"></div>
+                                <h2 className="text-2xl font-black text-slate-800 mb-6 text-center">การแชร์และใช้งานบนมือถือ</h2>
+                                
+                                <div className="space-y-6">
+                                    <div className="bg-teal-50 p-5 rounded-[2rem] border border-teal-100">
+                                        <h3 className="font-black text-teal-800 text-sm mb-3 uppercase tracking-wider">🌟 วิธีที่แนะนำที่สุด (ส่งเป็นลิงก์)</h3>
+                                        <p className="text-xs text-teal-700 leading-relaxed mb-3">เพื่อให้พยาบาลทุกคนเปิดได้ง่ายเหมือนเข้าเว็บ:</p>
+                                        <ol className="text-xs text-teal-900 space-y-2 list-decimal ml-4">
+                                            <li>เข้าเว็บ <b>Tiiny.host</b> ในคอมพิวเตอร์</li>
+                                            <li>ลากไฟล์ <b>nicu_mobile.html</b> ไปวางเพื่ออัปโหลด</li>
+                                            <li>คุณจะได้ลิงก์ (URL) มา เช่น <i>nicu-phet.tiiny.site</i></li>
+                                            <li><b>ส่งลิงก์นี้ให้เพื่อนใน LINE</b> ทุกคนจะเปิดได้ทันทีโดยไม่มีปัญหาไฟล์ไม่ขึ้นครับ!</li>
+                                        </ol>
+                                    </div>
+
+                                    <div className="space-y-4 text-sm text-slate-600">
+                                        <div className="flex gap-4 items-start">
+                                            <span className="teal-bg text-white w-6 h-6 rounded-full flex items-center justify-center shrink-0 font-bold text-xs">1</span>
+                                            <p className="pt-0.5 leading-relaxed text-xs">หากเปิดผ่านลิงก์ใน Safari แล้ว ให้กดปุ่ม <b>แชร์ (สี่เหลี่ยมลูกศร)</b></p>
+                                        </div>
+                                        <div className="flex gap-4 items-start">
+                                            <span className="teal-bg text-white w-6 h-6 rounded-full flex items-center justify-center shrink-0 font-bold text-xs">2</span>
+                                            <p className="pt-0.5 leading-relaxed text-xs">เลือก <b>"เพิ่มไปยังหน้าจอโฮม" (Add to Home Screen)</b> เพื่อสร้างไอคอนแอป</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <button onClick={() => setShowHelp(false)} className="mt-10 w-full py-5 bg-slate-900 text-white rounded-[1.5rem] font-bold shadow-xl active:scale-95 transition-all">CLOSE</button>
+                            </div>
+                        </div>
+                    )}
+
+                    <footer className="p-8 text-center text-[10px] text-slate-300 font-bold uppercase tracking-[0.2em] safe-area-bottom mt-auto">
+                        NICU Phrachomklao Hospital Phetchaburi
+                    </footer>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

@@ -164,25 +164,14 @@
                                 
                                 <div className="space-y-6">
                                     <div className="bg-teal-50 p-5 rounded-[2rem] border border-teal-100">
-                                        <h3 className="font-black text-teal-800 text-sm mb-3 uppercase tracking-wider">🌟 วิธีที่แนะนำที่สุด (ส่งเป็นลิงก์)</h3>
-                                        <p className="text-xs text-teal-700 leading-relaxed mb-3">เพื่อให้พยาบาลทุกคนเปิดได้ง่ายเหมือนเข้าเว็บ:</p>
+                                        <h3 className="font-black text-teal-800 text-sm mb-3 uppercase tracking-wider">🌟 วิธีแชร์ให้พยาบาลคนอื่น</h3>
+                                        <p className="text-xs text-teal-700 leading-relaxed mb-3">เพื่อให้ทุกคนเปิดใช้งานได้เสถียรที่สุด:</p>
                                         <ol className="text-xs text-teal-900 space-y-2 list-decimal ml-4">
-                                            <li>เข้าเว็บ <b>Tiiny.host</b> ในคอมพิวเตอร์</li>
-                                            <li>ลากไฟล์ <b>nicu_mobile.html</b> ไปวางเพื่ออัปโหลด</li>
-                                            <li>คุณจะได้ลิงก์ (URL) มา เช่น <i>nicu-phet.tiiny.site</i></li>
-                                            <li><b>ส่งลิงก์นี้ให้เพื่อนใน LINE</b> ทุกคนจะเปิดได้ทันทีโดยไม่มีปัญหาไฟล์ไม่ขึ้นครับ!</li>
+                                            <li>ส่งลิงก์เว็บไซต์ GitHub ของคุณให้เพื่อนใน LINE</li>
+                                            <li>เมื่อเพื่อนเปิดลิงก์ใน Safari แล้ว ให้กดปุ่ม <b>แชร์ (สี่เหลี่ยมลูกศร)</b></li>
+                                            <li>เลือก <b>"เพิ่มไปยังหน้าจอโฮม" (Add to Home Screen)</b></li>
+                                            <li>ทุกคนจะได้ไอคอนแอปบนหน้าจอมือถือทันทีครับ</li>
                                         </ol>
-                                    </div>
-
-                                    <div className="space-y-4 text-sm text-slate-600">
-                                        <div className="flex gap-4 items-start">
-                                            <span className="teal-bg text-white w-6 h-6 rounded-full flex items-center justify-center shrink-0 font-bold text-xs">1</span>
-                                            <p className="pt-0.5 leading-relaxed text-xs">หากเปิดผ่านลิงก์ใน Safari แล้ว ให้กดปุ่ม <b>แชร์ (สี่เหลี่ยมลูกศร)</b></p>
-                                        </div>
-                                        <div className="flex gap-4 items-start">
-                                            <span className="teal-bg text-white w-6 h-6 rounded-full flex items-center justify-center shrink-0 font-bold text-xs">2</span>
-                                            <p className="pt-0.5 leading-relaxed text-xs">เลือก <b>"เพิ่มไปยังหน้าจอโฮม" (Add to Home Screen)</b> เพื่อสร้างไอคอนแอป</p>
-                                        </div>
                                     </div>
                                 </div>
                                 
@@ -191,8 +180,13 @@
                         </div>
                     )}
 
-                    <footer className="p-8 text-center text-[10px] text-slate-300 font-bold uppercase tracking-[0.2em] safe-area-bottom mt-auto">
-                        NICU Phrachomklao Hospital Phetchaburi
+                    <footer className="p-8 text-center safe-area-bottom mt-auto">
+                        <div className="text-[10px] text-slate-400 font-extrabold uppercase tracking-[0.1em] mb-1">
+                            Acute care, pharmacy department, Phrachomklao Hospital Phetchaburi
+                        </div>
+                        <div className="text-[9px] text-slate-300 font-bold uppercase tracking-widest">
+                            Medication Safety System v1.0
+                        </div>
                     </footer>
                 </div>
             );
